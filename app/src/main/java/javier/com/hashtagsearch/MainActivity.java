@@ -1,13 +1,18 @@
 package javier.com.hashtagsearch;
 
+import android.app.SearchManager;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.Toast;
+
 import com.twitter.sdk.android.Twitter;
 import com.twitter.sdk.android.core.TwitterAuthConfig;
 
@@ -48,28 +53,47 @@ public class MainActivity extends AppCompatActivity {
         Fabric.with(this, new Twitter(authConfig));
         setContentView(R.layout.activity_main);
 
-        getSupportFragmentManager().beginTransaction().add(R.id.content, new SearchResultsFragment(),SearchResultsFragment.class.getSimpleName()).commit();
+        getSupportFragmentManager().beginTransaction().add(R.id.content, new SearchResultsFragment(), SearchResultsFragment.class.getSimpleName()).commit();
 
         BottomNavigationView navigation = ButterKnife.findById(this, R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+    }
+
+    /**
+     * Handles the search intent from the Search View
+     * @param intent
+     */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        handleIntent(intent);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.options_menu, menu);
+
+        SearchManager searchManager =
+                (SearchManager) getSystemService(SEARCH_SERVICE);
+        SearchView searchView =
+                (SearchView) menu.findItem(R.id.search).getActionView();
+        searchView.setSearchableInfo(
+                searchManager.getSearchableInfo(getComponentName()));
+
         return true;
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.search:
+    /**
+     * Retrieves the search string from intent and initializes the search
+     * @param intent The users search intent
+     */
+    private void handleIntent(Intent intent) {
 
-                Toast.makeText(this, "Search Clicked", Toast.LENGTH_SHORT).show();
-                return true;
-
+        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+            String query = intent.getStringExtra(SearchManager.QUERY);
+            Toast.makeText(this, query, Toast.LENGTH_SHORT).show();
+            //use the query to search your data somehow
         }
-        return super.onOptionsItemSelected(item);
     }
+
 }

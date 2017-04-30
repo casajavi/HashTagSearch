@@ -8,4 +8,7 @@
     <!-- Messages -->
     <string name="text_initial_search">Start a new search now!</string>
 
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
 </resources>
