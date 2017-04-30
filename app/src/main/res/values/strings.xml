@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">HashTagSearch</string>
+
+    <!-- Titles -->
+    <string name="title_search">Search</string>
+    <string name="title_history">History</string>
+
+    <!-- Messages -->
+    <string name="text_initial_search">Start a new search now!</string>
+
+</resources>
