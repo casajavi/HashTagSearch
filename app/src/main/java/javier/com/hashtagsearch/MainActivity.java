@@ -1,8 +1,8 @@
 package javier.com.hashtagsearch;
 
 import android.app.SearchManager;
-import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -11,14 +11,33 @@ import android.support.v7.widget.SearchView;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.twitter.sdk.android.Twitter;
 import com.twitter.sdk.android.core.TwitterAuthConfig;
+import com.twitter.sdk.android.core.models.Tweet;
 
+import java.io.File;
+import java.util.List;
+
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.fabric.sdk.android.Fabric;
+import io.realm.Realm;
+import io.realm.RealmList;
+import io.realm.internal.IOException;
+import javier.com.hashtagsearch.fragments.HistoryFragment;
 import javier.com.hashtagsearch.fragments.SearchResultsFragment;
+import javier.com.hashtagsearch.models.Search;
+import javier.com.hashtagsearch.models.SearchTweet;
+import javier.com.hashtagsearch.presenter.SearchPresenter;
+import rx.Observer;
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+import rx.subscriptions.CompositeSubscription;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -26,6 +45,20 @@ public class MainActivity extends AppCompatActivity {
     private static final String TWITTER_KEY = "pp2tpNNPnWwh3Rzn5vyl8kIYG";
     private static final String TWITTER_SECRET = "4Bdc1O7lggk10SYtP5B2YxTQOVjo4WOHOK85UV6G7WNRBQGuLF";
 
+
+    @BindView(R.id.progress_bar_loading)
+    ProgressBar progressBarLoading;
+
+    private SearchResultListener searchResultListener;
+    private CompositeSubscription compositeSubscription;
+    private Subscription searchSubscription;
+    private String currentQuery = "";
+    private Search currentSearch;
+
+    private SearchResultsFragment searchResultsFragment = new SearchResultsFragment();
+    private HistoryFragment historyFragment = new HistoryFragment();
+
+    private Realm realm;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -35,9 +68,17 @@ public class MainActivity extends AppCompatActivity {
             switch (item.getItemId()) {
                 case R.id.navigation_search:
                     // Show Current Search
+                    if (historyFragment.isFragmentVisible()) {
+                        getSupportFragmentManager().popBackStack();
+                    }
                     return true;
                 case R.id.navigation_history:
                     // Show Search History
+                    if (!historyFragment.isFragmentVisible()) {
+                        getSupportFragmentManager().beginTransaction().add(R.id.content, historyFragment
+                                , HistoryFragment.class.getSimpleName())
+                                .addToBackStack(HistoryFragment.class.getSimpleName()).commit();
+                    }
                     return true;
             }
             return false;
@@ -45,23 +86,61 @@ public class MainActivity extends AppCompatActivity {
 
     };
 
+    // Search result observer
+    Observer<List<Tweet>> searchObserver = new Observer<List<Tweet>>() {
+        @Override
+        public void onCompleted() {
+            // Removes subscription
+            compositeSubscription.remove(searchSubscription);
+        }
+
+        @Override
+        public void onError(Throwable e) {
+            progressBarLoading.setVisibility(View.GONE);
+            Toast.makeText(getApplicationContext()
+                    , R.string.message_search_error, Toast.LENGTH_LONG).show();
+        }
+
+        @Override
+        public void onNext(List<Tweet> tweets) {
+            // Writes results to realm
+            if (tweets != null) {
+                writeToRealm(tweets);
+            } else {
+                progressBarLoading.setVisibility(View.GONE);
+                Toast.makeText(getApplicationContext()
+                        , R.string.message_no_results, Toast.LENGTH_LONG).show();
+            }
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         TwitterAuthConfig authConfig = new TwitterAuthConfig(TWITTER_KEY, TWITTER_SECRET);
         Fabric.with(this, new Twitter(authConfig));
+        Realm.init(this);
+        realm = Realm.getDefaultInstance();
         setContentView(R.layout.activity_main);
 
-        getSupportFragmentManager().beginTransaction().add(R.id.content, new SearchResultsFragment(), SearchResultsFragment.class.getSimpleName()).commit();
+        ButterKnife.bind(this);
+
+        getSupportFragmentManager().beginTransaction().add(R.id.content, searchResultsFragment
+                , SearchResultsFragment.class.getSimpleName())
+                .addToBackStack(SearchResultsFragment.class.getSimpleName()).commit();
 
         BottomNavigationView navigation = ButterKnife.findById(this, R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+
+        compositeSubscription = new CompositeSubscription();
     }
 
     /**
      * Handles the search intent from the Search View
-     * @param intent
+     *
+     * @param intent users search intent
      */
     @Override
     protected void onNewIntent(Intent intent) {
@@ -83,17 +162,91 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    public void setSearchResultListener(SearchResultListener searchResultListener) {
+        this.searchResultListener = searchResultListener;
+    }
+
     /**
      * Retrieves the search string from intent and initializes the search
+     *
      * @param intent The users search intent
      */
     private void handleIntent(Intent intent) {
-
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
-            String query = intent.getStringExtra(SearchManager.QUERY);
-            Toast.makeText(this, query, Toast.LENGTH_SHORT).show();
-            //use the query to search your data somehow
+            progressBarLoading.setVisibility(View.VISIBLE);
+            currentQuery = intent.getStringExtra(SearchManager.QUERY);
+            if (!currentQuery.isEmpty()) {
+                SearchPresenter searchPresenter = new SearchPresenter(currentQuery);
+
+                searchSubscription = searchPresenter.subscribeOn(Schedulers.newThread())
+                        .observeOn(AndroidSchedulers.mainThread()).subscribe(searchObserver);
+
+                compositeSubscription.add(searchSubscription);
+            } else {
+                Toast.makeText(this, R.string.message_empty_query, Toast.LENGTH_SHORT).show();
+            }
         }
+    }
+
+
+    private void writeToRealm(final List<Tweet> searchResults) {
+
+        final RealmList<SearchTweet> searchTweets = new RealmList<>();
+        currentSearch = null;
+        realm.executeTransaction(new Realm.Transaction() {
+            @Override
+            public void execute(Realm realm) {
+                for (final Tweet tweet : searchResults) {
+                    SearchTweet searchTweet = realm.createObject(SearchTweet.class);
+                    searchTweet.initialize(tweet.id, tweet.text, tweet.user.screenName
+                            , tweet.user.name, tweet.user.profileImageUrl
+                            , tweet.entities.media == null ? null : tweet.entities.media.get(0).mediaUrl);
+                    searchTweets.add(searchTweet);
+                }
+
+                currentSearch = realm.createObject(Search.class);
+                currentSearch.setQuery(currentQuery);
+                currentSearch.setSearchTweets(searchTweets);
+            }
+        });
+
+        progressBarLoading.setVisibility(View.GONE);
+        searchResultListener.onSearchCompleted(currentSearch);
+    }
+
+
+    public void exportDatabase() {
+        File exportRealmFile = null;
+        try {
+            // get or create an "export.realm" file
+            exportRealmFile = new File(this.getExternalCacheDir(), "export.realm");
+
+            // if "export.realm" already exists, delete
+            exportRealmFile.delete();
+
+            // copy current realm to "export.realm"
+            realm.writeCopyTo(exportRealmFile);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        realm.close();
+
+        // init email intent and add export.realm as attachment
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("plain/text");
+        intent.putExtra(Intent.EXTRA_EMAIL, "YOUR MAIL");
+        intent.putExtra(Intent.EXTRA_SUBJECT, "YOUR SUBJECT");
+        intent.putExtra(Intent.EXTRA_TEXT, "YOUR TEXT");
+        Uri u = Uri.fromFile(exportRealmFile);
+        intent.putExtra(Intent.EXTRA_STREAM, u);
+
+        // start email intent
+        startActivity(Intent.createChooser(intent, "YOUR CHOOSER TITLE"));
+    }
+
+    public interface SearchResultListener {
+        void onSearchCompleted(Search results);
     }
 
 }
