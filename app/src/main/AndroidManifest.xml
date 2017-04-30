@@ -21,6 +21,10 @@
             <meta-data android:name="android.app.searchable"
                 android:resource="@xml/searchable" />
         </activity>
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="c444f3002a84718fa6a5c9431d3a57b5596b581e" />
     </application>
 
+    <uses-permission android:name="android.permission.INTERNET" />
 </manifest>
