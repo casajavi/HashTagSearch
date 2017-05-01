@@ -21,6 +21,9 @@ import javier.com.hashtagsearch.R;
 import javier.com.hashtagsearch.models.SearchTweet;
 import javier.com.hashtagsearch.utils.CropCircleTransformation;
 
+/**
+ * Created by Javi on 4/30/17.
+ */
 public class TweetRecyclerViewAdapter extends RecyclerView.Adapter<TweetRecyclerViewAdapter.ViewHolder> {
 
     private List<SearchTweet> mValues;

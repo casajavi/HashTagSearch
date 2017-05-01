@@ -20,7 +20,7 @@ import javier.com.hashtagsearch.R;
 import javier.com.hashtagsearch.models.Search;
 
 /**
- * A simple {@link Fragment} subclass.
+ * Created by Javi on 4/30/17.
  */
 public class HistoryFragment extends Fragment {
 

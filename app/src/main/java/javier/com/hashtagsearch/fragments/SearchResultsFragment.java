@@ -1,6 +1,5 @@
 package javier.com.hashtagsearch.fragments;
 
-import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -20,9 +19,12 @@ import javier.com.hashtagsearch.MainActivity;
 import javier.com.hashtagsearch.R;
 import javier.com.hashtagsearch.adapters.TweetRecyclerViewAdapter;
 import javier.com.hashtagsearch.models.Search;
-import javier.com.hashtagsearch.models.SearchTweet;
 
-public class SearchResultsFragment extends Fragment implements MainActivity.SearchResultListener , TweetRecyclerViewAdapter.OnItemListener{
+/**
+ * Created by Javi on 4/30/17.
+ */
+
+public class SearchResultsFragment extends Fragment implements MainActivity.SearchResultListener, TweetRecyclerViewAdapter.OnItemListener {
 
 
     @BindView(R.id.list)

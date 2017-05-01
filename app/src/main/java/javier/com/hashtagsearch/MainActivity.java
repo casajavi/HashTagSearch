@@ -180,6 +180,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Retrieves all stored searches
+     *
      * @return list of searches
      */
     public RealmResults<Search> retrieveSearches() {
@@ -190,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Sets up the UI to match the current search
+     *
      * @param query query string for search bar
      */
     public void setupSearchUI(String query) {
@@ -243,6 +245,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Handles the logic to persist the data
+     *
      * @param searchResults the results to be saved
      */
     private void writeToRealm(final List<Tweet> searchResults) {
