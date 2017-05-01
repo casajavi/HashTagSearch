@@ -1,6 +1,8 @@
 package javier.com.hashtagsearch.fragments;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -10,6 +12,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
+import com.ceylonlabs.imageviewpopup.ImagePopup;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import javier.com.hashtagsearch.MainActivity;
@@ -18,15 +22,8 @@ import javier.com.hashtagsearch.adapters.TweetRecyclerViewAdapter;
 import javier.com.hashtagsearch.models.Search;
 import javier.com.hashtagsearch.models.SearchTweet;
 
-/**
- * A fragment representing a list of Items.
- * <p/>
- * Activities containing this fragment MUST implement the {@link OnListFragmentInteractionListener}
- * interface.
- */
-public class SearchResultsFragment extends Fragment implements MainActivity.SearchResultListener {
+public class SearchResultsFragment extends Fragment implements MainActivity.SearchResultListener , TweetRecyclerViewAdapter.OnItemListener{
 
-    private OnListFragmentInteractionListener mListener;
 
     @BindView(R.id.list)
     RecyclerView recyclerView;
@@ -34,6 +31,7 @@ public class SearchResultsFragment extends Fragment implements MainActivity.Sear
     RelativeLayout relativeLayoutNewSearch;
 
     private TweetRecyclerViewAdapter adapter;
+    private ImagePopup imagePopup;
 
     public SearchResultsFragment() {
     }
@@ -51,43 +49,30 @@ public class SearchResultsFragment extends Fragment implements MainActivity.Sear
         ButterKnife.bind(this, view);
         // Set the adapter
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new TweetRecyclerViewAdapter(null, mListener, getContext());
+        adapter = new TweetRecyclerViewAdapter(null, this, getContext());
         recyclerView.setAdapter(adapter);
 
         ((MainActivity) getActivity()).setSearchResultListener(this);
+
+        imagePopup = new ImagePopup(getActivity());
+        imagePopup.setBackgroundColor(Color.BLACK);
+        imagePopup.setWindowWidth(640);
+        imagePopup.setWindowHeight(640);
+        imagePopup.setHideCloseIcon(true);
+        imagePopup.setImageOnClickClose(true);
         return view;
-    }
-
-
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
-        mListener = null;
     }
 
     @Override
     public void onSearchCompleted(Search results) {
         relativeLayoutNewSearch.setVisibility(View.GONE);
         adapter.updateItems(results.getSearchTweets());
+        adapter.notifyDataSetChanged();
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p/>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
-    public interface OnListFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onListFragmentInteraction(SearchTweet item);
+    @Override
+    public void onItemImageInteraction(Drawable drawable) {
+        imagePopup.initiatePopup(drawable);
     }
+
 }

@@ -4,6 +4,7 @@ import android.support.annotation.NonNull;
 
 import io.realm.RealmList;
 import io.realm.RealmObject;
+import io.realm.annotations.PrimaryKey;
 
 /**
  * Created by Javi on 4/30/17.
@@ -12,12 +13,18 @@ import io.realm.RealmObject;
 public class Search extends RealmObject {
 
     @NonNull
+    @PrimaryKey
     private String query;
 
     @NonNull
     private RealmList<SearchTweet> searchTweets;
 
     public Search() {
+    }
+
+    public Search(@NonNull String query, @NonNull RealmList<SearchTweet> searchTweets) {
+        this.query = query;
+        this.searchTweets = searchTweets;
     }
 
     @NonNull

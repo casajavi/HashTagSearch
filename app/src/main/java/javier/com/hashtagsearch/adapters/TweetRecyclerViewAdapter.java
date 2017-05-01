@@ -1,6 +1,7 @@
 package javier.com.hashtagsearch.adapters;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.support.percent.PercentFrameLayout;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -17,17 +18,16 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import javier.com.hashtagsearch.R;
-import javier.com.hashtagsearch.fragments.SearchResultsFragment.OnListFragmentInteractionListener;
 import javier.com.hashtagsearch.models.SearchTweet;
 import javier.com.hashtagsearch.utils.CropCircleTransformation;
 
 public class TweetRecyclerViewAdapter extends RecyclerView.Adapter<TweetRecyclerViewAdapter.ViewHolder> {
 
     private List<SearchTweet> mValues;
-    private final OnListFragmentInteractionListener mListener;
+    private final OnItemListener mListener;
     private Context context;
 
-    public TweetRecyclerViewAdapter(List<SearchTweet> items, OnListFragmentInteractionListener listener, Context context) {
+    public TweetRecyclerViewAdapter(List<SearchTweet> items, OnItemListener listener, Context context) {
         mValues = items;
         mListener = listener;
         this.context = context;
@@ -35,7 +35,6 @@ public class TweetRecyclerViewAdapter extends RecyclerView.Adapter<TweetRecycler
 
     public void updateItems(List<SearchTweet> mValues) {
         this.mValues = mValues;
-        notifyDataSetChanged();
     }
 
     @Override
@@ -63,16 +62,16 @@ public class TweetRecyclerViewAdapter extends RecyclerView.Adapter<TweetRecycler
             holder.layoutTweetImage.setVisibility(View.VISIBLE);
             Glide.with(context.getApplicationContext()).load(currentTweet.getTweetImage())
                     .into(holder.imageViewTweet);
+        } else {
+            holder.layoutTweetImage.setVisibility(View.GONE);
+            Glide.clear(holder.imageViewTweet);
+            holder.imageViewTweet.setImageDrawable(null);
         }
 
-        holder.contentView.setOnClickListener(new View.OnClickListener() {
+        holder.imageViewTweet.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                if (null != mListener) {
-                    // Notify the active callbacks interface (the activity, if the
-                    // fragment is attached to one) that an item has been selected.
-                    mListener.onListFragmentInteraction(holder.searchTweet);
-                }
+            public void onClick(View view) {
+                mListener.onItemImageInteraction(holder.imageViewTweet.getDrawable());
             }
         });
     }
@@ -108,5 +107,11 @@ public class TweetRecyclerViewAdapter extends RecyclerView.Adapter<TweetRecycler
             super(view);
             ButterKnife.bind(this, view);
         }
+    }
+
+
+    public interface OnItemListener {
+        // TODO: Update argument type and name
+        void onItemImageInteraction(Drawable drawable);
     }
 }

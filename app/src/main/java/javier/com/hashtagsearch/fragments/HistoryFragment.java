@@ -43,9 +43,11 @@ public class HistoryFragment extends Fragment {
 
         ButterKnife.bind(this, view);
 
+        searchList = null;
+
         searchList = ((MainActivity) getActivity()).retrieveSearches();
 
-        ArrayList<String> queries = new ArrayList<>();
+        final ArrayList<String> queries = new ArrayList<>();
 
         for (Search search : searchList) {
             queries.add(0, search.getQuery().toUpperCase());
@@ -60,9 +62,13 @@ public class HistoryFragment extends Fragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                Search search = searchList.get(position);
-                ((MainActivity) getActivity()).searchResultListener.onSearchCompleted(search);
-                ((MainActivity) getActivity()).setupSearchUI(search.getQuery());
+
+                for (Search search : searchList) {
+                    if (search.getQuery().equalsIgnoreCase(queries.get(position))) {
+                        ((MainActivity) getActivity()).searchResultListener.onSearchCompleted(search);
+                        ((MainActivity) getActivity()).setupSearchUI(search.getQuery());
+                    }
+                }
             }
         });
 
@@ -72,5 +78,4 @@ public class HistoryFragment extends Fragment {
     public boolean isFragmentVisible() {
         return HistoryFragment.this.isVisible();
     }
-
 }

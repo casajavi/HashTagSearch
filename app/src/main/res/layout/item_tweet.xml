@@ -63,7 +63,8 @@
 
                 <ImageView
                     android:id="@+id/imageView_tweet"
-                    android:scaleType="fitXY"
+                    android:background="@android:color/black"
+                    android:scaleType="centerInside"
                     app:layout_aspectRatio="177%"
                     app:layout_widthPercent="100%" />
             </android.support.percent.PercentFrameLayout>
