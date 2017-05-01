@@ -56,6 +56,5 @@ dependencies {
     compile 'com.android.support:percent:25.3.1'
     compile 'com.github.chathuralakmal:AndroidImagePopup:1.0.6'
     testCompile 'junit:junit:4.12'
-    testCompile "org.mockito:mockito-core:2.+"
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
 }
