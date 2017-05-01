@@ -23,7 +23,7 @@ import javier.com.hashtagsearch.utils.CropCircleTransformation;
 
 public class TweetRecyclerViewAdapter extends RecyclerView.Adapter<TweetRecyclerViewAdapter.ViewHolder> {
 
-    private final List<SearchTweet> mValues;
+    private List<SearchTweet> mValues;
     private final OnListFragmentInteractionListener mListener;
     private Context context;
 
@@ -31,6 +31,11 @@ public class TweetRecyclerViewAdapter extends RecyclerView.Adapter<TweetRecycler
         mValues = items;
         mListener = listener;
         this.context = context;
+    }
+
+    public void updateItems(List<SearchTweet> mValues) {
+        this.mValues = mValues;
+        notifyDataSetChanged();
     }
 
     @Override

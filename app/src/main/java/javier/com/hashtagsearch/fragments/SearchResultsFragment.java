@@ -8,6 +8,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -29,6 +30,10 @@ public class SearchResultsFragment extends Fragment implements MainActivity.Sear
 
     @BindView(R.id.list)
     RecyclerView recyclerView;
+    @BindView(R.id.layout_new_search)
+    RelativeLayout relativeLayoutNewSearch;
+
+    private TweetRecyclerViewAdapter adapter;
 
     public SearchResultsFragment() {
     }
@@ -46,9 +51,10 @@ public class SearchResultsFragment extends Fragment implements MainActivity.Sear
         ButterKnife.bind(this, view);
         // Set the adapter
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        recyclerView.setAdapter(new TweetRecyclerViewAdapter(null, mListener, getContext()));
+        adapter = new TweetRecyclerViewAdapter(null, mListener, getContext());
+        recyclerView.setAdapter(adapter);
 
-        ((MainActivity)getActivity()).setSearchResultListener(this);
+        ((MainActivity) getActivity()).setSearchResultListener(this);
         return view;
     }
 
@@ -66,11 +72,8 @@ public class SearchResultsFragment extends Fragment implements MainActivity.Sear
 
     @Override
     public void onSearchCompleted(Search results) {
-        recyclerView.setAdapter(new TweetRecyclerViewAdapter(results.getSearchTweets(), mListener, getContext()));
-    }
-
-    public boolean isFragmentVisible() {
-        return SearchResultsFragment.this.isVisible();
+        relativeLayoutNewSearch.setVisibility(View.GONE);
+        adapter.updateItems(results.getSearchTweets());
     }
 
     /**

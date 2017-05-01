@@ -8,13 +8,43 @@
     android:background="@color/tw__solid_white">
 
 
+    <RelativeLayout
+        android:id="@+id/layout_new_search"
+        android:layout_width="300dp"
+        android:layout_height="70dp"
+        android:layout_gravity="end|top"
+        android:layout_marginEnd="5dp"
+        android:layout_marginRight="5dp"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:text="@string/text_new_search"
+            android:textColor="@android:color/black"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/image_up"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_gravity="center"
+            app:srcCompat="@drawable/ic_arrow_up" />
+    </RelativeLayout>
+
+
     <android.support.v7.widget.RecyclerView
+        android:id="@+id/list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/list"
         app:layoutManager="LinearLayoutManager"
-        tools:listitem="@layout/item_tweet"
-        tools:context="javier.com.hashtagsearch.fragments.SearchResultsFragment">
+        tools:context="javier.com.hashtagsearch.fragments.SearchResultsFragment"
+        tools:listitem="@layout/item_tweet">
 
 
     </android.support.v7.widget.RecyclerView>

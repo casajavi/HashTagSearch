@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/layout_content"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_margin="15dp">
+    android:layout_margin="15dp"
+    android:background="@android:color/white">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="10dp">
+        android:layout_marginBottom="10dp"
+        android:orientation="horizontal">
 
         <ImageView
             android:id="@+id/imageView_user"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_marginEnd="15dp"
-            android:layout_marginRight="15dp"/>
+            android:layout_marginRight="15dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -28,31 +29,30 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
+
                 <TextView
                     android:id="@+id/text_profile_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textStyle="bold"
-                    android:textColor="@android:color/black"
-                    android:layout_marginRight="10dp"
                     android:layout_marginEnd="10dp"
-                    />
+                    android:layout_marginRight="10dp"
+                    android:textColor="@android:color/black"
+                    android:textStyle="bold" />
+
                 <TextView
                     android:id="@+id/text_username"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textStyle="italic"
                     android:textColor="@android:color/black"
-                    />
+                    android:textStyle="italic" />
             </LinearLayout>
 
             <TextView
                 android:id="@+id/text_tweet_content"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:maxLines="4"
                 android:layout_marginTop="10dp"
-                />
+                android:maxLines="4" />
 
             <android.support.percent.PercentFrameLayout
                 android:id="@+id/layout_tweet_image"
@@ -60,12 +60,12 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:visibility="gone">
+
                 <ImageView
                     android:id="@+id/imageView_tweet"
                     android:scaleType="fitXY"
                     app:layout_aspectRatio="177%"
-                    app:layout_widthPercent="100%"
-                    />
+                    app:layout_widthPercent="100%" />
             </android.support.percent.PercentFrameLayout>
         </LinearLayout>
     </LinearLayout>
@@ -73,6 +73,6 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="@color/colorAccent"
-        android:layout_gravity="bottom"/>
+        android:layout_gravity="bottom"
+        android:background="@color/colorAccent" />
 </FrameLayout>

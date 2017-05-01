@@ -2,7 +2,6 @@ package javier.com.hashtagsearch;
 
 import android.app.SearchManager;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
@@ -19,23 +18,26 @@ import com.twitter.sdk.android.Twitter;
 import com.twitter.sdk.android.core.TwitterAuthConfig;
 import com.twitter.sdk.android.core.models.Tweet;
 
-import java.io.File;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.fabric.sdk.android.Fabric;
 import io.realm.Realm;
 import io.realm.RealmList;
-import io.realm.internal.IOException;
+import io.realm.RealmQuery;
+import io.realm.RealmResults;
 import javier.com.hashtagsearch.fragments.HistoryFragment;
 import javier.com.hashtagsearch.fragments.SearchResultsFragment;
 import javier.com.hashtagsearch.models.Search;
 import javier.com.hashtagsearch.models.SearchTweet;
 import javier.com.hashtagsearch.presenter.SearchPresenter;
+import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
 import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 
@@ -45,15 +47,20 @@ public class MainActivity extends AppCompatActivity {
     private static final String TWITTER_KEY = "pp2tpNNPnWwh3Rzn5vyl8kIYG";
     private static final String TWITTER_SECRET = "4Bdc1O7lggk10SYtP5B2YxTQOVjo4WOHOK85UV6G7WNRBQGuLF";
 
+    private static final int UPDATE_INTERVAL = 60;
+
 
     @BindView(R.id.progress_bar_loading)
     ProgressBar progressBarLoading;
+    @BindView(R.id.navigation)
+    BottomNavigationView bottomNavigationView;
 
-    private SearchResultListener searchResultListener;
+    public SearchResultListener searchResultListener;
     private CompositeSubscription compositeSubscription;
     private Subscription searchSubscription;
     private String currentQuery = "";
     private Search currentSearch;
+    private SearchView searchView;
 
     private SearchResultsFragment searchResultsFragment = new SearchResultsFragment();
     private HistoryFragment historyFragment = new HistoryFragment();
@@ -114,6 +121,15 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    Observable<Long> updateObservable;
+    // Search update Action
+    Action1<Long> updateAction = new Action1<Long>() {
+        @Override
+        public void call(Long aLong) {
+            initiateSearch();
+        }
+    };
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,8 +147,7 @@ public class MainActivity extends AppCompatActivity {
                 , SearchResultsFragment.class.getSimpleName())
                 .addToBackStack(SearchResultsFragment.class.getSimpleName()).commit();
 
-        BottomNavigationView navigation = ButterKnife.findById(this, R.id.navigation);
-        navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+        bottomNavigationView.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         compositeSubscription = new CompositeSubscription();
     }
@@ -154,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
 
         SearchManager searchManager =
                 (SearchManager) getSystemService(SEARCH_SERVICE);
-        SearchView searchView =
+        searchView =
                 (SearchView) menu.findItem(R.id.search).getActionView();
         searchView.setSearchableInfo(
                 searchManager.getSearchableInfo(getComponentName()));
@@ -176,21 +191,35 @@ public class MainActivity extends AppCompatActivity {
             progressBarLoading.setVisibility(View.VISIBLE);
             currentQuery = intent.getStringExtra(SearchManager.QUERY);
             if (!currentQuery.isEmpty()) {
-                SearchPresenter searchPresenter = new SearchPresenter(currentQuery);
-
-                searchSubscription = searchPresenter.subscribeOn(Schedulers.newThread())
-                        .observeOn(AndroidSchedulers.mainThread()).subscribe(searchObserver);
-
-                compositeSubscription.add(searchSubscription);
+                initiateSearch();
             } else {
                 Toast.makeText(this, R.string.message_empty_query, Toast.LENGTH_SHORT).show();
             }
         }
     }
 
+    private void initiateSearch() {
+        SearchPresenter searchPresenter = new SearchPresenter(currentQuery);
+
+        searchSubscription = searchPresenter.subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread()).subscribe(searchObserver);
+
+        compositeSubscription.add(searchSubscription);
+    }
+
+    private void initiateSearchUpdate() {
+        updateObservable = Observable.interval(0, UPDATE_INTERVAL, TimeUnit.SECONDS);
+        // Start Search refresher
+        compositeSubscription.add(updateObservable
+                .onBackpressureBuffer()
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(updateAction));
+    }
+
 
     private void writeToRealm(final List<Tweet> searchResults) {
-
+        bottomNavigationView.setSelectedItemId(R.id.navigation_search);
         final RealmList<SearchTweet> searchTweets = new RealmList<>();
         currentSearch = null;
         realm.executeTransaction(new Realm.Transaction() {
@@ -212,37 +241,19 @@ public class MainActivity extends AppCompatActivity {
 
         progressBarLoading.setVisibility(View.GONE);
         searchResultListener.onSearchCompleted(currentSearch);
+        initiateSearchUpdate();
     }
 
 
-    public void exportDatabase() {
-        File exportRealmFile = null;
-        try {
-            // get or create an "export.realm" file
-            exportRealmFile = new File(this.getExternalCacheDir(), "export.realm");
+    public RealmResults<Search> retrieveSearches() {
+        RealmQuery<Search> searchQuery = realm.where(Search.class);
 
-            // if "export.realm" already exists, delete
-            exportRealmFile.delete();
+        return searchQuery.findAll();
+    }
 
-            // copy current realm to "export.realm"
-            realm.writeCopyTo(exportRealmFile);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        realm.close();
-
-        // init email intent and add export.realm as attachment
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("plain/text");
-        intent.putExtra(Intent.EXTRA_EMAIL, "YOUR MAIL");
-        intent.putExtra(Intent.EXTRA_SUBJECT, "YOUR SUBJECT");
-        intent.putExtra(Intent.EXTRA_TEXT, "YOUR TEXT");
-        Uri u = Uri.fromFile(exportRealmFile);
-        intent.putExtra(Intent.EXTRA_STREAM, u);
-
-        // start email intent
-        startActivity(Intent.createChooser(intent, "YOUR CHOOSER TITLE"));
+    public void setupSearchUI(String query) {
+        bottomNavigationView.setSelectedItemId(R.id.navigation_search);
+        searchView.setQuery(query, false);
     }
 
     public interface SearchResultListener {

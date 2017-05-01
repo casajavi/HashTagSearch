@@ -14,5 +14,6 @@
     <string name="message_empty_query">Please input a search term.</string>
     <string name="message_no_results">No Results found, want to search for something else?</string>
     <string name="message_search_error">An error occurred please try again</string>
+    <string name="text_new_search">Start a new search now!</string>
 
 </resources>
